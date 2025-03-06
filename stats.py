@@ -147,10 +147,20 @@ if __name__ == '__main__':
     data = collect_data("data")
     tf_idf = tf_idf_general(data)
 
-    top10 = top_tfidf(tf_idf, x=10)
-    for text in top10:
+    top = top_tfidf(tf_idf, x=20)
+
+    # print()
+    # count = 1
+    # for entry in top["zeit3.txt"]:
+    #     print(f"{count}\t{entry}")
+    #     count += 1
+    # print()
+
+
+
+    for text in top:
         print(text)
-        for entry in top10[text]:
+        for entry in top[text]:
             print("\t", entry)
         print()
         print()
