@@ -1,14 +1,3 @@
-#############################################
-### descriptive statistics about our data ###
-#############################################
-
-
-"""
-TO ADD:
-    - (pos-tagging)
-    - (stemming)
-"""
-
 ### imports
 import os
 from os import listdir
@@ -17,6 +6,13 @@ import math
 import nltk
 from nltk.tokenize import RegexpTokenizer
 from nltk.corpus import stopwords
+import regex as re
+import pandas as pd
+
+
+#############################################
+### descriptive statistics about our data ###
+#############################################
 
 
 ###########################
@@ -33,10 +29,13 @@ def read_text(filename):
 
 def tokenize(text):
     """Tokenize text into word-tokens."""
-    # tok_list = text.lower().split()
-    # return tok_list
-    tokenizer = RegexpTokenizer(r'\w+\-\w+|\w+')
-    tok_list = tokenizer.tokenize(text)
+    text.replace("*", "")
+    tok_list = list()
+    toks = re.findall(r'\w+\-?\w*', text)
+    for index, tok in enumerate(toks):
+        if not tok.isnumeric():
+            tok_list.append(tok)
+            
     return tok_list
 # --> ["a", "b", "c", ...]
 
@@ -51,6 +50,8 @@ def sentence_tokens(text):
 def remove_stopwords(token):
     """Remove stopwords from text."""    
     stop = nltk.corpus.stopwords.words("german")
+    stop.append("für")
+    stop.append("nen")
     toks_filtered = [tok for tok in token if tok not in stop]
     return toks_filtered
 
@@ -63,13 +64,6 @@ def count_tokens(tokens):
 
 
 
-def count_quotations(text):
-    """Count of "-characters divided by 2 as estimation of quotations."""
-    return text.count('"')
-
-
-
-
 ##############################
 ### higher level functions ###
 ##############################
@@ -78,23 +72,73 @@ def collect_data(directory):
     """
     Read and preprocess all texts.
     Returns a dictionary with keys = filenames
-    and values = frequency_dictionaries.
+    and values = frequency_dictionaries
     """
     collection = dict()
+    metadata = dict()
 
     textfiles = os.listdir(directory)
     for f in textfiles:
         path = os.path.join(directory, f)
         text = read_text(path)
+        
+        metadata[f] = dict()
         toks = tokenize(text)
+        metadata[f]["count_words"] = len(toks)
+        metadata[f]["count_wordtypes"] = len(set(toks))
+
         toks = remove_stopwords(toks)
+        metadata[f]["count_toks"] = len(toks)
+        metadata[f]["count_toktypes"] = len(set(toks))
+
         toks_sent = sentence_tokens(text)
+        metadata[f]["count_sent"] = len(toks_sent)
+        
         toks_freq = count_tokens(toks)
         collection[f] = toks_freq
 
-    print(toks[:50])
-    print(toks_sent[:5])
-    return collection
+    return collection, metadata
+
+
+def collect_data_by_journal(directory):
+    """
+    Read and preprocess all texts while grouping texts from the same journal.
+    Returns a dictionary with keys = journals
+    and values = frequency_dictionaries
+    """
+    collection = dict()
+    metadata = dict()
+
+    textfiles = os.listdir(directory)
+    for f in textfiles:
+        path = os.path.join(directory, f)
+        text = read_text(path)
+
+        # join text of the same journal in one string
+        for char in f:
+            if char.isnumeric():
+                f = f.replace(char, "")
+        collection[f] = collection.get(f, "") + text
+        
+        if f not in metadata.keys():
+            metadata[f] = dict()
+        metadata[f]["count_articles"] = metadata[f].get("count_articles", 0) + 1
+
+    for journal in collection:
+        metadata[journal]["count_sent"] = len(sentence_tokens(collection[journal]))
+
+        collection[journal] = tokenize(collection[journal])
+        metadata[journal]["count_words"] = len(collection[journal])
+        metadata[journal]["count_wordtypes"] = len(set(collection[journal]))
+
+        collection[journal] = remove_stopwords(collection[journal])
+        metadata[journal]["count_toks"] = len(collection[journal])
+        metadata[journal]["count_toktypes"] = len(set(collection[journal]))
+        
+        collection[journal] = count_tokens(collection[journal]) 
+
+    return collection, metadata
+
 
 
 
@@ -169,27 +213,19 @@ def top_tfidf(tfidf_dict, x=10):
     return tfidf_sorted
 
 
+def top_freq(data: dict, x=50):
+
+    top_freqs = dict() 
+    for key in data:
+        tok_freqs = list(data[key].items())
+        tok_freqs.sort(key=lambda x: x[1], reverse=True)
+        top_freqs[key] = tok_freqs[:x]
+    return top_freqs
+
+
+
 
 
 # boilerplate
 if __name__ == '__main__':
-    data = collect_data("data")
-    # tf_idf = tf_idf_general(data)
-
-    # top = top_tfidf(tf_idf, x=20)
-
-    # print()
-    # count = 1
-    # for entry in top["zeit3.txt"]:
-    #     print(f"{count}\t{entry}")
-    #     count += 1
-    # print()
-
-
-
-    # for text in top:
-    #     print(text)
-    #     for entry in top[text]:
-    #         print("\t", entry)
-    #     print()
-    #     print()
+    pass
