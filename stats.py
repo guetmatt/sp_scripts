@@ -5,8 +5,6 @@
 
 """
 TO ADD:
-    - stopword filtering
-    - improve tokenization (punctuation, qutotation marks etc.)
     - (pos-tagging)
     - (stemming)
 """
@@ -16,6 +14,9 @@ import os
 from os import listdir
 from os.path import join
 import math
+import nltk
+from nltk.tokenize import RegexpTokenizer
+from nltk.corpus import stopwords
 
 
 ###########################
@@ -25,16 +26,33 @@ import math
 def read_text(filename):
     """Read text and return string with full text."""
     with open(filename, 'r', encoding="UTF-8") as f:
-       text = f.read()
+       text = f.read().lower()
     return text
 # --> "A b C t E f G h"
 
 
 def tokenize(text):
-    """Tokenize text by spliting at whitespace."""
-    tok_list = text.lower().split()
+    """Tokenize text into word-tokens."""
+    # tok_list = text.lower().split()
+    # return tok_list
+    tokenizer = RegexpTokenizer(r'\w+\-\w+|\w+')
+    tok_list = tokenizer.tokenize(text)
     return tok_list
 # --> ["a", "b", "c", ...]
+
+
+def sentence_tokens(text):
+    """Tokenize text into sentence-tokens."""
+    tokenizer = RegexpTokenizer(r'\b[^.\n]+')
+    tok_list = tokenizer.tokenize(text)
+    return tok_list
+
+
+def remove_stopwords(token):
+    """Remove stopwords from text."""    
+    stop = nltk.corpus.stopwords.words("german")
+    toks_filtered = [tok for tok in token if tok not in stop]
+    return toks_filtered
 
 
 def count_tokens(tokens):
@@ -42,6 +60,13 @@ def count_tokens(tokens):
     for index, tok in enumerate(tokens):
         tok_freq[tok] = tok_freq.get(tok, 0) + 1
     return tok_freq
+
+
+
+def count_quotations(text):
+    """Count of "-characters divided by 2 as estimation of quotations."""
+    return text.count('"')
+
 
 
 
@@ -62,9 +87,13 @@ def collect_data(directory):
         path = os.path.join(directory, f)
         text = read_text(path)
         toks = tokenize(text)
+        toks = remove_stopwords(toks)
+        toks_sent = sentence_tokens(text)
         toks_freq = count_tokens(toks)
         collection[f] = toks_freq
 
+    print(toks[:50])
+    print(toks_sent[:5])
     return collection
 
 
@@ -145,9 +174,9 @@ def top_tfidf(tfidf_dict, x=10):
 # boilerplate
 if __name__ == '__main__':
     data = collect_data("data")
-    tf_idf = tf_idf_general(data)
+    # tf_idf = tf_idf_general(data)
 
-    top = top_tfidf(tf_idf, x=20)
+    # top = top_tfidf(tf_idf, x=20)
 
     # print()
     # count = 1
@@ -158,9 +187,9 @@ if __name__ == '__main__':
 
 
 
-    for text in top:
-        print(text)
-        for entry in top[text]:
-            print("\t", entry)
-        print()
-        print()
+    # for text in top:
+    #     print(text)
+    #     for entry in top[text]:
+    #         print("\t", entry)
+    #     print()
+    #     print()
