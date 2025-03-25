@@ -12,7 +12,7 @@ def write_to_disk(data, transp="yes", csv_name="default.csv", sep=";"):
     if transp=="yes":
         df = df.transpose()
 
-    df.to_csv(f"results\{csv_name}", sep=sep, decimal=".")
+    df.to_csv(f"results/{csv_name}", sep=sep, decimal=".")
 
     return df
 
