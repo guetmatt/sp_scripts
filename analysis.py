@@ -1,13 +1,13 @@
+### imports
 from stats import *
 import pandas as pd
 
-"""
-- x most frequent words
-- x top tfidf words
-"""
+#################
+### functions ###
+#################
 
-### write to disk ###
 def write_to_disk(data, transp="yes", csv_name="default.csv", sep=";"):
+    """Save dataframe on local machine as csv-file."""
     df = pd.DataFrame(data).transpose()
     if transp=="yes":
         df = df.transpose()
@@ -17,10 +17,8 @@ def write_to_disk(data, transp="yes", csv_name="default.csv", sep=";"):
     return df
 
 
-
-### single texts ###
-# data, metadata = collect_data("data")
 def stats_by_article(directory, printout="yes"):
+    """Collect metadata and statistics for each article."""
     data, metadata = collect_data(directory)
     top_freqs = top_freq(data, x=50)
     tf_idf = tf_idf_general(data)
@@ -64,8 +62,9 @@ def stats_by_article(directory, printout="yes"):
     return data, metadata, top_freqs, top_tf_idf
 
 
-### texts by journal ###
+
 def stats_by_journal(directory, printout="yes"):
+    """Collect metadata and statistics for each newspaper."""
     data, metadata = collect_data_by_journal(directory)
     top_freqs = top_freq(data, x=50)
     tf_idf = tf_idf_general(data)

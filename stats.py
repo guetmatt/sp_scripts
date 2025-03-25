@@ -24,7 +24,6 @@ def read_text(filename):
     with open(filename, 'r', encoding="UTF-8") as f:
        text = f.read().lower()
     return text
-# --> "A b C t E f G h"
 
 
 def tokenize(text):
@@ -34,10 +33,8 @@ def tokenize(text):
     toks = re.findall(r'\w+\-?\w*', text)
     for index, tok in enumerate(toks):
         if not tok.isnumeric():
-            tok_list.append(tok)
-            
+            tok_list.append(tok)       
     return tok_list
-# --> ["a", "b", "c", ...]
 
 
 def sentence_tokens(text):
@@ -48,7 +45,7 @@ def sentence_tokens(text):
 
 
 def remove_stopwords(token):
-    """Remove stopwords from text."""    
+    """Remove stopwords from text with the nltk-stopwords-corpus."""    
     stop = nltk.corpus.stopwords.words("german")
     stop.append("für")
     stop.append("nen")
@@ -57,6 +54,7 @@ def remove_stopwords(token):
 
 
 def count_tokens(tokens):
+    """Count frequency of tokens in a text."""
     tok_freq = dict()
     for index, tok in enumerate(tokens):
         tok_freq[tok] = tok_freq.get(tok, 0) + 1
@@ -77,11 +75,13 @@ def collect_data(directory):
     collection = dict()
     metadata = dict()
 
+    # open textfiles
     textfiles = os.listdir(directory)
     for f in textfiles:
         path = os.path.join(directory, f)
         text = read_text(path)
         
+        # collect metadata for each text
         metadata[f] = dict()
         toks = tokenize(text)
         metadata[f]["count_words"] = len(toks)
@@ -102,19 +102,21 @@ def collect_data(directory):
 
 def collect_data_by_journal(directory):
     """
-    Read and preprocess all texts while grouping texts from the same journal.
+    Read and preprocess all texts, with texts from one newspaper
+    being grouped into one text.
     Returns a dictionary with keys = journals
     and values = frequency_dictionaries
     """
     collection = dict()
     metadata = dict()
 
+    # open textfiles
     textfiles = os.listdir(directory)
     for f in textfiles:
         path = os.path.join(directory, f)
         text = read_text(path)
 
-        # join text of the same journal in one string
+        # join text of the same newspaper in one string
         for char in f:
             if char.isnumeric():
                 f = f.replace(char, "")
@@ -124,6 +126,7 @@ def collect_data_by_journal(directory):
             metadata[f] = dict()
         metadata[f]["count_articles"] = metadata[f].get("count_articles", 0) + 1
 
+    # collect metadata for each newspaper
     for journal in collection:
         metadata[journal]["count_sent"] = len(sentence_tokens(collection[journal]))
 
@@ -138,8 +141,6 @@ def collect_data_by_journal(directory):
         collection[journal] = count_tokens(collection[journal]) 
 
     return collection, metadata
-
-
 
 
 def tf_idf_general(data):
@@ -214,16 +215,13 @@ def top_tfidf(tfidf_dict, x=10):
 
 
 def top_freq(data: dict, x=50):
-
+    """Create frequency-dictionary with 50 most frequent tokens."""
     top_freqs = dict() 
     for key in data:
         tok_freqs = list(data[key].items())
         tok_freqs.sort(key=lambda x: x[1], reverse=True)
         top_freqs[key] = tok_freqs[:x]
     return top_freqs
-
-
-
 
 
 # boilerplate
